@@ -1,0 +1,5 @@
+test/
+*.test.ts
+.git
+node_modules/
+bun.lock
