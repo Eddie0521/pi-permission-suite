@@ -1,6 +1,6 @@
 {
   "name": "pi-permission-suite",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Four approval modes + command-level security restrictions for the Pi coding agent. Act / Auto / Ask / Plan mode switching, rule engine, subagent auto-approval.",
   "keywords": [
     "pi-package",
