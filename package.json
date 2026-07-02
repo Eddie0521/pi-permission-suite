@@ -1,7 +1,7 @@
 {
   "name": "pi-permission-suite",
   "version": "0.2.0",
-  "description": "四种审批模式 + 指令级安全限制的 Pi 扩展。Act / Auto / Ask / Plan 模式切换，规则引擎，subagent 自动审批。",
+  "description": "Four approval modes + command-level security restrictions for the Pi coding agent. Act / Auto / Ask / Plan mode switching, rule engine, subagent auto-approval.",
   "keywords": [
     "pi-package",
     "pi-extension",
