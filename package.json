@@ -1,13 +1,21 @@
 {
   "name": "pi-permission-suite",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "四种审批模式 + 指令级安全限制的 Pi 扩展。Act / Auto / Ask / Plan 模式切换，规则引擎，subagent 自动审批。",
-  "keywords": ["pi-package", "pi-extension", "pi-permission-suite", "approval", "security"],
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "pi-permission-suite",
+    "approval",
+    "security"
+  ],
   "license": "MIT",
   "type": "module",
   "main": "index.ts",
   "pi": {
-    "extensions": ["./index.ts"]
+    "extensions": [
+      "./index.ts"
+    ]
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",
