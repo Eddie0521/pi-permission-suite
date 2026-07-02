@@ -1,6 +1,12 @@
+<p align="right">
+  <a href="README-zh.md">🇨🇳 中文</a>
+</p>
+
 # Pi Permission Suite
 
-四种审批模式 + 指令级安全限制的 Pi 扩展。基于 `@gotgenes/pi-permission-system` 改造升级。
+> Four approval modes + command-level security restrictions for the Pi coding agent.
+
+A Pi extension that provides **Act / Auto / Ask / Plan** permission modes, a rule engine for command and path protection, and a subagent-based auto-approver. Enhanced fork of [`@gotgenes/pi-permission-system`](https://www.npmjs.com/package/@gotgenes/pi-permission-system).
 
 ## Install
 
@@ -8,97 +14,92 @@
 pi install npm:pi-permission-suite
 ```
 
-安装后重启 pi，你会获得：
-- `/approval-mode` 命令切换四种模式
-- `set_approval_mode` 工具（agent 可调用）
-- `Ctrl+Q` 快捷键循环切换
-- 规则引擎自动拦截危险命令
+Once installed and pi restarted, you get:
+- `/approval-mode` command to switch between four modes
+- `set_approval_mode` tool (callable by the agent itself)
+- `Ctrl+Q` keyboard shortcut to cycle modes
+- A rule engine that blocks dangerous commands across all modes
+- Subagent auto-approval for complex tool calls
 
-## 依赖
+## Modes
 
-- `web-tree-sitter` + `tree-sitter-bash`（bash 命令 AST 解析）
-- 可选：无依赖时自动降级为正则匹配
+| Mode | Icon | Shortcut | Description |
+|------|------|----------|-------------|
+| Act | ⚡ | Ctrl+Q | Full permissions (default) |
+| Auto | 🤖 | Ctrl+Q | Subagent approval for uncertain calls |
+| Ask | ❓ | Ctrl+Q | Read-only Q&A — write tools disabled |
+| Plan | 📋 | Ctrl+Q | Read-only planning — write tools disabled |
 
-## 模式
-
-| 模式 | 图标 | 快捷键 | 说明 |
-|------|------|--------|------|
-| Act | ⚡ | Ctrl+Q | 完全权限（默认） |
-| Auto | 🤖 | Ctrl+Q | subagent 审批 |
-| Ask | ❓ | Ctrl+Q | 只读问答 |
-| Plan | 📋 | Ctrl+Q | 只读计划 |
-
-## 命令
+## Commands
 
 ```bash
-/approval-mode [ask|auto|act|plan]  # 切换模式
-/approval-status                    # 查看状态
+/approval-mode [ask|auto|act|plan]  # Switch mode
+/approval-status                    # View current status
 ```
 
-## 工具（agent 可调用）
+## Tool (agent-callable)
 
 ```typescript
-// agent 可以通过调用此工具自动切换模式
-set_approval_mode({ mode: "plan" })  // 切换到只读计划模式
-set_approval_mode({ mode: "act" })   // 切换到完全权限模式
+// Agent can switch modes on its own
+set_approval_mode({ mode: "plan" })  // Switch to read-only plan mode
+set_approval_mode({ mode: "act" })   // Switch to full permission mode
 ```
 
-## 规则引擎
+## Rule Engine
 
-### 评估优先级
+### Evaluation Order
 
 ```
-deny 规则（硬阻断，任何模式不可覆盖）
-  ↓ 未命中
-allow 规则（自动放行）
-  ↓ 未命中
-session always rules（交互式添加的临时规则）
-  ↓ 未命中
-模式层决策（ask/plan 阻断写操作，act 放行，auto 走 AI 审查）
+deny rules (hard block, overrides all modes)
+  ↓ no match
+allow rules (auto-approve, skips mode check)
+  ↓ no match
+session always rules (interactive temporary rules)
+  ↓ no match
+Mode-layer decision (ask/plan block writes, act passes, auto delegates to AI)
 ```
 
-### Deny 规则（所有模式生效）
+### Deny Rules (applied in all modes)
 
-**bash 命令：**
-- tree-sitter 解析链式命令（`&&`、`||`、`;`、`|`）
-- 识别命令替换 `$(...)` 和子 shell
-- 通配符匹配：`"sudo *": "禁止 sudo"`
-- 硬编码灾难命令兜底：`rm -rf /`、`fork bomb`、`curl|bash`
+**bash commands:**
+- tree-sitter parses chained commands (`&&`, `||`, `;`, `|`)
+- Detects command substitution `$(...)` and subshells
+- Wildcard matching: `"sudo *": "sudo blocked"`
+- Hardcoded disaster command fallback: `rm -rf /`, fork bombs, `curl|bash`
 
-**文件路径（跨工具）：**
-- `read`/`write`/`edit`/`bash` 都受 path 规则约束
-- symlink 解析防绕过
-- 通配符匹配：`"*.env": "禁止访问环境变量文件"`
+**File paths (cross-tool):**
+- `read`/`write`/`edit`/`bash` all subject to path rules
+- Symlink resolution to prevent bypass
+- Wildcard matching: `"*.env": "env files blocked"`
 
-### Allow 规则
+### Allow Rules
 
-| 类别 | 命令 |
-|------|------|
-| 文件查看 | `cat`, `head`, `tail`, `less`, `more`, `wc`, `file`, `stat` |
-| 目录/搜索 | `ls`, `tree`, `find`, `grep`, `rg` |
+| Category | Commands |
+|----------|----------|
+| File viewing | `cat`, `head`, `tail`, `less`, `more`, `wc`, `file`, `stat` |
+| Directory/search | `ls`, `tree`, `find`, `grep`, `rg` |
 | Git | `status`, `log`, `diff`, `show`, `branch`, `tag`, `remote`, `describe`, `blame`, `reflog` |
-| 系统状态 | `ps`, `top`, `df`, `du`, `free`, `uptime`, `uname`, `id`, `whoami` |
-| 包管理 | `npm list/info/view`, `pip list/show`, `cargo tree`, `go list` |
+| System status | `ps`, `top`, `df`, `du`, `free`, `uptime`, `uname`, `id`, `whoami` |
+| Package mgmt | `npm list/info/view`, `pip list/show`, `cargo tree`, `go list` |
 | Docker | `docker ps/images/logs/inspect/version` |
-| 压缩文件 | `zcat`, `zgrep`, `unzip -l`, `tar -t` |
-| 文本处理 | `awk`, `sed`, `jq`, `sort`, `uniq`, `cut`, `tr`, `diff` |
-| 网络 | `curl`, `wget`, `ping`, `dig`, `traceroute`, `whois`, `netstat` |
+| Archives | `zcat`, `zgrep`, `unzip -l`, `tar -t` |
+| Text processing | `awk`, `sed`, `jq`, `sort`, `uniq`, `cut`, `tr`, `diff` |
+| Network | `curl`, `wget`, `ping`, `dig`, `traceroute`, `whois`, `netstat` |
 
-## 配置
+## Configuration
 
-默认规则在 `config.default.json` 中（随包发布）。
+Default rules ship in `config.default.json`.
 
-用户自定义配置在 `~/.pi/extensions/pi-permission-suite/config.json`。
-首次加载时自动从默认文件创建，用户直接编辑即可。
+User config lives at `~/.pi/extensions/pi-permission-suite/config.json`. Created automatically on first load from the default.
 
 ```jsonc
 {
-  // bash 命令规则
+  // bash command rules
   "bash": {
     "deny": {
-      "rm -rf /": "禁止删除根目录",
-      "sudo *": "禁止 sudo",
-      "curl * | bash": "禁止远程代码执行"
+      "rm -rf /": "prevent root deletion",
+      "sudo *": "block sudo",
+      "curl * | bash": "block remote code execution"
     },
     "allow": {
       "bun test": true,
@@ -108,34 +109,46 @@ session always rules（交互式添加的临时规则）
       "cat *": true
     }
   },
-  // 跨工具文件路径规则
+  // cross-tool file path rules
   "path": {
     "deny": {
-      "*.env": "禁止访问环境变量文件",
-      "~/.ssh/*": "禁止访问 SSH 密钥"
+      "*.env": "block env file access",
+      "~/.ssh/*": "block SSH key access"
     },
     "allow": {
       "*.env.example": true
     }
   },
-  // CWD 外路径策略："mode" | "deny" | "allow"
+  // CWD-external path strategy: "mode" | "deny" | "allow"
   "external_directory": "mode"
 }
 ```
 
-## 文件
+### Config Semantics
+
+- `deny` entries → hard block, no mode can override (including `act`)
+- `allow` entries → auto-approve, skip the mode layer
+- Neither matches → delegate to mode layer
+- `external_directory`: `"mode"` = fall through to mode; `"deny"` = hard block; `"allow"` = approve
+
+## Project Structure
 
 ```
 pi-permission-suite/
-├── index.ts              # 主逻辑
-├── types.ts              # 类型
-├── rules.ts              # 规则引擎
-├── approver.ts           # 审批器
-├── subprocess-runner.ts  # 子进程调用
-├── bash-parser.ts        # tree-sitter bash 解析
-├── wildcard-matcher.ts   # 通配符匹配
-├── path-utils.ts         # 路径工具
-├── config-loader.ts      # 配置加载
-├── config.default.json   # 默认规则
-└── README.md             # 本文件
+├── index.ts              # Main extension entry
+├── types.ts              # Shared types
+├── rules.ts              # Rule engine
+├── approver.ts           # Auto-approver
+├── subprocess-runner.ts  # Subprocess runner
+├── bash-parser.ts        # tree-sitter bash parser
+├── wildcard-matcher.ts   # Glob matching
+├── path-utils.ts         # Path utilities
+├── config-loader.ts      # Config loader
+├── config.default.json   # Default rules
+└── README.md             # This file (English)
+└── README-zh.md          # Chinese translation
 ```
+
+## License
+
+MIT — based on [`@gotgenes/pi-permission-system`](https://www.npmjs.com/package/@gotgenes/pi-permission-system) (MIT).
