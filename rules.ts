@@ -61,7 +61,7 @@ const HARD_DENY: Rule[] = [
 // ─── Hardcoded allow rules (read-only baseline) ────────────────────────
 
 const HARD_ALLOW: Rule[] = [
-  { name: "read-tools", tools: ["read", "grep", "find", "ls"], patterns: [/.*/] },
+  { name: "read-tools", tools: ["read", "grep", "find", "ls", "question", "questionnaire", "web_search", "fetch_content", "get_search_content", "get_subagent_result", "goal_complete", "steer_subagent", "Agent"], patterns: [/.*/] },
   { name: "bash-readonly", tools: ["bash"], patterns: [
     /^\s*(cat|head|tail|less|more|wc|file|stat|ls|tree|find|grep|rg|which|date|pwd)\b/,
     /^\s*git\s+(status|log|diff|show|branch|tag|remote|describe|blame|reflog|stash\s+list)\b/,
@@ -373,6 +373,8 @@ export class RuleEngine {
         case "write_path_prefix":
           if (ctx.toolName !== "write" && ctx.toolName !== "edit") return false;
           return String(ctx.input.path ?? "").startsWith(rule.prefix);
+        default:
+          return false;
       }
     });
   }
@@ -403,10 +405,12 @@ function simpleChainSplit(cmd: string): string[] {
     if (ch === '"' && !inSingle) { current += ch; inDouble = !inDouble; continue; }
     if (inSingle || inDouble) { current += ch; continue; }
 
-    if ((ch === "&" && cmd[i + 1] === "&") || (ch === "|" && cmd[i + 1] === "|") || ch === ";" || ch === "|") {
+    const isChainOp = (ch === "&" && cmd[i + 1] === "&") || (ch === "|" && cmd[i + 1] === "|");
+    const isSeparator = ch === ";" || ch === "|" || ch === "&";
+    if (isChainOp || isSeparator) {
       if (current.trim()) parts.push(current.trim());
       current = "";
-      if (ch === "&" || (ch === "|" && cmd[i + 1] === "|")) i++;
+      if ((ch === "&" && cmd[i + 1] === "&") || (ch === "|" && cmd[i + 1] === "|")) i++;
       continue;
     }
     current += ch;

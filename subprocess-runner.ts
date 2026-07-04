@@ -6,6 +6,7 @@
 
 import { spawn } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
+import { homedir } from "node:os";
 import { join } from "node:path";
 
 export interface SubprocessResult {
@@ -14,8 +15,6 @@ export interface SubprocessResult {
   error?: string;
 }
 
-// ─── 从 agent .md 文件读取配置 ─────────────────────────────────────
-
 interface AgentConfig {
   model?: string;
   tools?: string[];
@@ -23,7 +22,7 @@ interface AgentConfig {
 }
 
 export function loadAgent(name: string): AgentConfig | null {
-  const userDir = join(process.env.HOME ?? "", ".pi", "agent", "agents");
+  const userDir = join(homedir(), ".pi", "agent", "agents");
   const filePath = join(userDir, `${name}.md`);
 
   if (!existsSync(filePath)) return null;
@@ -33,7 +32,10 @@ export function loadAgent(name: string): AgentConfig | null {
     const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
     if (!match) return null;
 
-    const get = (key: string) => match[1].match(new RegExp(`${key}:\\s*(.+)`))?.[1]?.trim();
+    const get = (key: string) => {
+      if (!/^[a-zA-Z0-9_-]+$/.test(key)) return undefined;
+      return match[1].match(new RegExp(`${key}:\\s*(.+)`))?.[1]?.trim();
+    };
 
     return {
       model: get("model"),
@@ -44,8 +46,6 @@ export function loadAgent(name: string): AgentConfig | null {
     return null;
   }
 }
-
-// ─── 运行子进程 ────────────────────────────────────────────────────
 
 export async function runSubprocess(
   prompt: string,
@@ -90,17 +90,23 @@ export async function runSubprocess(
   });
 }
 
-// ─── 提取输出 ──────────────────────────────────────────────────────
-
 function extractOutput(raw: string): string {
   const lines = raw.split("\n").filter(Boolean);
   for (let i = lines.length - 1; i >= 0; i--) {
     try {
       const e = JSON.parse(lines[i]);
       if (e.type === "message_end" && e.message?.role === "assistant") {
-        return e.message.content?.filter((c: any) => c.type === "text").map((c: any) => c.text).join("") ?? "";
+        const parts: string[] = [];
+        for (const c of e.message.content ?? []) {
+          if (c.type === "text" && typeof c.text === "string") {
+            parts.push(c.text);
+          }
+        }
+        return parts.join("");
       }
-    } catch {}
+    } catch {
+      // JSON.parse 失败 — 继续检查下一行
+    }
   }
   return "";
 }

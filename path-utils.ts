@@ -96,22 +96,28 @@ export function getPathPolicyValues(pathValue: string, cwd: string): string[] {
 
   const absolute = normalizePath(pathValue, cwd);
   const values = new Set<string>();
-  if (absolute) {
-    values.add(absolute);
-    // Project-relative alias
-    const normalizedCwd = normalizePath(cwd, cwd);
-    if (normalizedCwd && isPathWithinDirectory(absolute, normalizedCwd)) {
-      const rel = relative(normalizedCwd, absolute);
-      if (rel) values.add(rel);
-    }
+  if (!absolute) {
+    values.add(literal);
+    return [...values];
   }
+
+  values.add(absolute);
+  // Project-relative alias
+  const normalizedCwd = normalizePath(cwd, cwd);
+  if (!normalizedCwd || !isPathWithinDirectory(absolute, normalizedCwd)) {
+    values.add(literal);
+    return [...values];
+  }
+
+  const rel = relative(normalizedCwd, absolute);
+  if (rel) values.add(rel);
   values.add(literal);
   return [...values];
 }
 
 // ─── File tool helpers ─────────────────────────────────────────────────
 
-export const READONLY_TOOLS = new Set(["read", "grep", "find", "ls", "set_approval_mode"]);
+export const READONLY_TOOLS = new Set(["read", "grep", "find", "ls", "set_approval_mode", "question", "questionnaire", "web_search", "fetch_content", "get_search_content", "get_subagent_result", "goal_complete", "steer_subagent", "Agent"]);
 const PATH_TOOLS = new Set(["read", "write", "edit", "grep", "find", "ls"]);
 
 export function getToolPath(toolName: string, input: Record<string, unknown>): string | null {

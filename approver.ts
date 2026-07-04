@@ -30,10 +30,12 @@ function parseResponse(text: string): { approved: boolean; reason: string; confi
       return {
         approved: Boolean(p.approved),
         reason: String(p.reason ?? ""),
-        confidence: Math.min(1, Math.max(0, Number(p.confidence) ?? 0.5)),
+        confidence: Math.min(1, Math.max(0, Number(p.confidence ?? 0.5))),
       };
     }
-  } catch {}
+  } catch {
+    // JSON 解析失败是预期行为 — 返回默认拒绝决策
+  }
   return { approved: false, reason: "无法解析", confidence: 0 };
 }
 
@@ -45,8 +47,6 @@ async function escalate(ctx: ExtensionContext, toolName: string, input: Record<s
   const c = await ctx.ui.select(`🤖 审批不确定\n\n${fmt}\n${reason}`, ["✅ 批准", "❌ 拒绝"]);
   return { approved: c?.includes("批准") ?? false, source: "human" };
 }
-
-// ─── 主入口 ────────────────────────────────────────────────────────
 
 export async function autoApprove(ctx: ExtensionContext, toolName: string, input: Record<string, unknown>): Promise<ApprovalDecision> {
   // 加载 approver agent 配置

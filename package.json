@@ -22,8 +22,8 @@
     "typebox": "*"
   },
   "dependencies": {
-    "web-tree-sitter": "^0.26.9",
-    "tree-sitter-bash": "^0.25.1"
+    "tree-sitter-bash": "^0.25.1",
+    "web-tree-sitter": "^0.26.9"
   },
   "repository": {
     "type": "git",
@@ -32,5 +32,8 @@
   "homepage": "https://github.com/Eddie0521/pi-permission-suite#readme",
   "bugs": {
     "url": "https://github.com/Eddie0521/pi-permission-suite/issues"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0"
   }
 }

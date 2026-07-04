@@ -30,11 +30,13 @@ Once installed and pi restarted, you get:
 | Ask | ❓ | Ctrl+Q | Read-only Q&A — write tools disabled |
 | Plan | 📋 | Ctrl+Q | Read-only planning — write tools disabled |
 
+**Ask/Plan available tools:** `read`, `grep`, `find`, `ls`, `question`, `questionnaire`, `web_search`, `fetch_content`, `get_search_content`, `get_subagent_result`, `goal_complete`, `steer_subagent`, `Agent`, `set_approval_mode`
+
 ## Commands
 
 ```bash
 /approval-mode [ask|auto|act|plan]  # Switch mode
-/approval-status                    # View current status
+
 ```
 
 ## Tool (agent-callable)

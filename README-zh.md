@@ -30,11 +30,12 @@ pi install npm:pi-permission-suite
 | Ask | ❓ | Ctrl+Q | 只读问答，写工具禁用 |
 | Plan | 📋 | Ctrl+Q | 只读计划，写工具禁用 |
 
+**Ask/Plan 可用工具：** `read`, `grep`, `find`, `ls`, `question`, `questionnaire`, `web_search`, `fetch_content`, `get_search_content`, `get_subagent_result`, `goal_complete`, `steer_subagent`, `Agent`, `set_approval_mode`
+
 ## 命令
 
 ```bash
 /approval-mode [ask|auto|act|plan]  # 切换模式
-/approval-status                    # 查看状态
 ```
 
 ## 工具（agent 可调用）

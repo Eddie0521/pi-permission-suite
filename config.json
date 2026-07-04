@@ -132,6 +132,5 @@
       "*.env.example": true,
       "*.env.template": true
     }
-  },
-  "external_directory": "mode"
+  }
 }

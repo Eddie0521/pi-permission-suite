@@ -32,10 +32,7 @@ export interface ApprovalConfig {
     deny: Record<string, string>;
     allow: Record<string, boolean>;
   };
-  external_directory: "mode" | "deny" | "allow";
 }
-
-// ─── Config path ───────────────────────────────────────────────────────
 
 /** Path to the user's config file */
 export function getConfigPath(): string {
@@ -48,8 +45,6 @@ function builtinConfigPath(): string {
   return join(url.pathname, "config.default.json");
 }
 
-// ─── Load ──────────────────────────────────────────────────────────────
-
 export function loadConfig(): ApprovalConfig {
   const path = getConfigPath();
 
@@ -58,9 +53,6 @@ export function loadConfig(): ApprovalConfig {
     try {
       const raw = readFileSync(path, "utf-8");
       const parsed = JSON.parse(raw) as ApprovalConfig;
-      if (!["mode", "deny", "allow"].includes(parsed.external_directory)) {
-        parsed.external_directory = "mode";
-      }
       return parsed;
     } catch {
       // Corrupted file → fall through to write fresh
@@ -71,9 +63,13 @@ export function loadConfig(): ApprovalConfig {
   mkdirSync(dirname(path), { recursive: true });
   const builtin = builtinConfigPath();
   if (existsSync(builtin)) {
-    const content = readFileSync(builtin, "utf-8");
-    writeFileSync(path, content, "utf-8");
-    return JSON.parse(content) as ApprovalConfig;
+    try {
+      const content = readFileSync(builtin, "utf-8");
+      writeFileSync(path, content, "utf-8");
+      return JSON.parse(content) as ApprovalConfig;
+    } catch {
+      // 内置默认配置损坏，继续到最小默认值
+    }
   }
 
   // Last resort: minimal safe default (shouldn't happen if package is intact)
