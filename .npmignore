@@ -3,3 +3,5 @@ test/
 .git
 node_modules/
 bun.lock
+config.json
+.github/
